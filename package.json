@@ -1,0 +1,25 @@
+{
+  "name": "identity-reconciliation",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "rimraf dist && npx tsc",
+    "prestart": "npm run build",
+    "start": "node  --env-file=.env dist/index.js",
+    "dev": "concurrently \"npx tsc -w\" \"nodemon --env-file=.env dist/index.js\""
+  },
+  "keywords": [],
+  "author": "hardiksachan",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.12",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.0",
+    "rimraf": "^5.0.7",
+    "typescript": "^5.4.5"
+  }
+}
