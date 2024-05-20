@@ -18,13 +18,23 @@
 // - `createdAt` is needed because we need it to decide which contact to make
 //   primary in case of merge.
 
-export type ContactData = {
+export type Contact = {
+  id: number;
+  phoneNumber?: String;
+  email?: String;
+  linkedId?: number;
+  createdAt: Date;
+};
+
+export type AddContact = {
   phoneNumber?: String;
   email?: String;
   linkedId?: number;
 };
 
-export type Contact = {
+export type UpdateContact = {
   id: number;
-  createdAt: Date;
-} & ContactData;
+  phoneNumber?: String;
+  email?: String;
+  linkedId?: number;
+};

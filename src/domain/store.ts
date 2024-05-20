@@ -1,9 +1,9 @@
-import { Contact, ContactData } from "./contact";
+import { AddContact, Contact, UpdateContact } from "./contact";
 
 export interface ContactStore {
-  addContact(contact: ContactData): Promise<void>;
-  getContact(id: number): Promise<Contact>;
-  updateContact(contact: Contact): Promise<void>;
+  addContact(contact: AddContact): Promise<void>;
+  getContact(id: number): Promise<Contact | null>;
+  updateContact(contact: UpdateContact): Promise<void>;
   getContactsWithEmail(email: string): Promise<Contact[]>;
   getContactsWithPhoneNumber(phoneNumber: string): Promise<Contact[]>;
 }
