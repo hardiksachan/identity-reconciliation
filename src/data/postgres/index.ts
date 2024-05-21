@@ -2,7 +2,13 @@ import { AddContact, Contact } from "../../domain/contact";
 import { db } from "./db";
 
 export const addContact = async (contact: AddContact): Promise<void> => {
-  await db.insertInto("contact").values(contact).executeTakeFirst();
+  await db
+    .insertInto("contact")
+    .values({
+      ...contact,
+      linkPrecedence: contact.linkedId ? "secondary" : "primary",
+    })
+    .executeTakeFirst();
 };
 
 export const mergePrimaries = async (
@@ -11,7 +17,7 @@ export const mergePrimaries = async (
 ): Promise<void> => {
   await db
     .updateTable("contact")
-    .set({ linkedId: primaryId })
+    .set({ linkedId: primaryId, linkPrecedence: "secondary" })
     .where((eb) => eb("linkedId", "=", secondaryId).or("id", "=", secondaryId))
     .execute();
 };
