@@ -3,12 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "rimraf dist && npx tsc",
+    "build": "rimraf dist && npm run introspect && npx tsc",
     "prestart": "npm run build",
     "start": "node  --env-file=.env dist/index.js",
     "dev": "concurrently \"npx tsc -w\" \"nodemon --env-file=.env dist/index.js\"",
     "test": "jest --watchAll",
-    "premigrate": "npm run build",
     "migrate": "node --env-file=.env dist/migrate.js",
     "introspect": "kysely-codegen"
   },
