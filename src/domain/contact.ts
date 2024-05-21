@@ -23,7 +23,7 @@ export type Contact = {
   phoneNumber?: String;
   email?: String;
   linkedId?: number;
-  createdAt: Date;
+  createdAt: number;
 };
 
 export type AddContact = {

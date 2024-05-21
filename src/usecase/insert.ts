@@ -35,9 +35,16 @@ export const contactInserter = (store: ContactStore) => {
       }
 
       // merge case
+      if (emailLinkedContact.createdAt < phoneNumberLinkedContact.createdAt) {
+        await store.mergePrimaries(
+          emailLinkedContact.id,
+          phoneNumberLinkedContact.id,
+        );
+        return;
+      }
       await store.mergePrimaries(
-        emailLinkedContact.id,
         phoneNumberLinkedContact.id,
+        emailLinkedContact.id,
       );
       return;
     }

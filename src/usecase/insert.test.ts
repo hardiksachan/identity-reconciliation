@@ -189,6 +189,7 @@ describe("when complete contact is to be added", () => {
     };
 
     await insertContact({ email });
+    await new Promise((resolve) => setTimeout(resolve, 200));
     await insertContact({ phoneNumber });
 
     const contacts = await store.getAllContacts();
@@ -202,7 +203,7 @@ describe("when complete contact is to be added", () => {
     expect(newContacts[1].linkedId).toBe(1);
   });
 
-  test("disjoint related email and phone-number-linked contact exists, should merge contact even if chains exists", async () => {
+  test("disjoint related email and phone-number-linked contact exists, should merge contact even if chains exists and order is changed wrt email and password", async () => {
     await store.resetStore();
     const email = faker.internet.email();
     const phoneNumber = faker.phone.number();
@@ -211,10 +212,11 @@ describe("when complete contact is to be added", () => {
       phoneNumber,
     };
 
-    await insertContact({ email });
-    await insertContact({ email, phoneNumber: faker.phone.number() });
     await insertContact({ phoneNumber });
     await insertContact({ phoneNumber, email: faker.internet.email() });
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await insertContact({ email });
+    await insertContact({ email, phoneNumber: faker.phone.number() });
 
     const contacts = await store.getAllContacts();
     expect(contacts).toHaveLength(4);
