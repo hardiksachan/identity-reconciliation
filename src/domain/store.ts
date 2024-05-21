@@ -1,9 +1,13 @@
-import { AddContact, Contact, UpdateContact } from "./contact";
+import { AddContact, Contact } from "./contact";
 
 export interface ContactStore {
   addContact(contact: AddContact): Promise<void>;
-  getContact(id: number): Promise<Contact | null>;
-  updateContact(contact: UpdateContact): Promise<void>;
-  getContactsWithEmail(email: string): Promise<Contact[]>;
-  getContactsWithPhoneNumber(phoneNumber: string): Promise<Contact[]>;
+  mergePrimaries(primaryId: number, secondaryId: number): Promise<void>;
+  getPrimaryViaEmail(email: string): Promise<Contact | null>;
+  getPrimaryViaPhoneNumber(phoneNumber: string): Promise<Contact | null>;
+
+  getLinkedContacts(contactLike: {
+    email?: string;
+    phoneNumber?: string;
+  }): Promise<Contact[]>;
 }

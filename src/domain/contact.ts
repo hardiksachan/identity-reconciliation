@@ -31,10 +31,3 @@ export type AddContact = {
   email?: String;
   linkedId?: number;
 };
-
-export type UpdateContact = {
-  id: number;
-  phoneNumber?: String;
-  email?: String;
-  linkedId?: number;
-};

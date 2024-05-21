@@ -1,7 +1,16 @@
-import { AddContact, Contact, UpdateContact } from "../domain/contact";
+import { AddContact, Contact } from "../domain/contact";
 
 let nextId: number = 1;
 let contacts: Contact[] = [];
+
+const resetStore = async () => {
+  nextId = 1;
+  contacts = [];
+};
+
+const getAllContacts = async () => {
+  return [...contacts];
+};
 
 const addContact = async (contact: AddContact) => {
   contacts = [
@@ -15,27 +24,69 @@ const addContact = async (contact: AddContact) => {
 };
 
 const getContact = async (id: number) => {
-  return contacts.find((contact) => contact.id === id);
+  return contacts.find((contact) => contact.id === id) || null;
 };
 
-const updateContact = async (contact: UpdateContact) => {
-  const idx = contacts.findIndex(({ id }) => id === contact.id);
-  if (idx === -1) return;
-  contacts[idx] = { ...contacts[idx], ...contact };
+const getPrimaryViaEmail = async (email: string) => {
+  const anyEmailLinked = contacts.find((contact) => contact.email === email);
+  if (!anyEmailLinked) return null;
+  if (anyEmailLinked.linkedId === undefined) return anyEmailLinked;
+  return (
+    contacts.find((contact) => contact.id === anyEmailLinked.linkedId) || null
+  );
 };
 
-const getContactsWithEmail = async (email: string) => {
-  return [...contacts.filter((contact) => contact.email === email)];
+const getPrimaryViaPhoneNumber = async (phoneNumber: string) => {
+  const anyPhoneLinked = contacts.find(
+    (contact) => contact.phoneNumber === phoneNumber,
+  );
+  if (!anyPhoneLinked) return null;
+  if (anyPhoneLinked.linkedId === undefined) return anyPhoneLinked;
+  return (
+    contacts.find((contact) => contact.id === anyPhoneLinked.linkedId) || null
+  );
 };
 
-const getContactsWithPhoneNumber = async (phoneNumber: string) => {
-  return [...contacts.filter((contact) => contact.phoneNumber === phoneNumber)];
+const mergePrimaries = async (primaryId: number, secondaryId: number) => {
+  contacts = contacts.map((contact) => {
+    if (contact.linkedId === secondaryId || contact.id === secondaryId) {
+      return {
+        ...contact,
+        linkedId: primaryId,
+      };
+    }
+
+    return contact;
+  });
+};
+
+const getLinkedContacts = async ({
+  email,
+  phoneNumber,
+}: {
+  email?: string;
+  phoneNumber?: string;
+}) => {
+  const anyLinked = contacts.find(
+    (contact) => contact.email === email || contact.phoneNumber === phoneNumber,
+  );
+  if (!anyLinked) return [];
+  const primaryId = anyLinked.linkedId || anyLinked.id;
+
+  return [
+    ...contacts.filter(
+      (contact) => contact.linkedId === primaryId || contact.id === primaryId,
+    ),
+  ];
 };
 
 export default {
+  resetStore,
+  getAllContacts,
   addContact,
   getContact,
-  updateContact,
-  getContactsWithEmail,
-  getContactsWithPhoneNumber,
+  mergePrimaries,
+  getPrimaryViaEmail,
+  getPrimaryViaPhoneNumber,
+  getLinkedContacts,
 };
