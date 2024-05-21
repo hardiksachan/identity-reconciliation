@@ -2,7 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import bodyParser from "body-parser";
 import { contactInserter } from "./usecase/insert";
-import store from "./data/in-memory";
+import * as store from "./data/postgres";
 import { contactReader } from "./usecase/read";
 import { removeDuplicatesInPlace, removeUndefinedAndNulls } from "./utils";
 
@@ -31,28 +31,16 @@ app.post("/identify", async (req, res) => {
   await insertContact({ email, phoneNumber });
 
   const contacts = await readContact({ email, phoneNumber });
-  const primaryContact = contacts.find(
-    (contact) => contact.linkedId === undefined,
-  )!;
-  const secondaryContacts = contacts.filter(
-    (contact) => contact.linkedId !== undefined,
-  );
 
   const result = {
-    primaryContactId: primaryContact.id,
+    primaryContactId: contacts[0].id,
     emails: removeDuplicatesInPlace(
-      removeUndefinedAndNulls([
-        primaryContact.email,
-        ...secondaryContacts.map((contact) => contact.email),
-      ]),
+      removeUndefinedAndNulls(contacts.map((contact) => contact.email)),
     ),
     phoneNumbers: removeDuplicatesInPlace(
-      removeUndefinedAndNulls([
-        primaryContact.phoneNumber,
-        ...secondaryContacts.map((contact) => contact.phoneNumber),
-      ]),
+      removeUndefinedAndNulls(contacts.map((contact) => contact.phoneNumber)),
     ),
-    secondaryContactIds: secondaryContacts.map((contact) => contact.id),
+    secondaryContactIds: contacts.slice(1).map((contact) => contact.id),
   };
 
   res.status(200).send({

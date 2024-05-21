@@ -20,14 +20,14 @@
 
 export type Contact = {
   id: number;
-  phoneNumber?: String;
-  email?: String;
-  linkedId?: number;
-  createdAt: number;
+  phoneNumber?: string | null | undefined;
+  email?: string | null | undefined;
+  linkedId?: number | null | undefined;
+  createdAt: Date;
 };
 
 export type AddContact = {
-  phoneNumber?: String;
-  email?: String;
-  linkedId?: number;
+  phoneNumber?: string | null | undefined;
+  email?: string | null | undefined;
+  linkedId?: number | null | undefined;
 };

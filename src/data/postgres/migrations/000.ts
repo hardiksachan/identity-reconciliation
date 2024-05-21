@@ -7,10 +7,10 @@ export async function up(db: Kysely<any>) {
     .addColumn("phoneNumber", "varchar")
     .addColumn("email", "varchar")
     .addColumn("linkedId", "integer", (col) => col.references("contact.id"))
-    .addColumn("createdAt", "date", (col) =>
+    .addColumn("createdAt", "timestamptz", (col) =>
       col.notNull().defaultTo(sql`now()`),
     )
-    .addColumn("updatedAt", "date", (col) =>
+    .addColumn("updatedAt", "timestamptz", (col) =>
       col.notNull().defaultTo(sql`now()`),
     )
     .execute();

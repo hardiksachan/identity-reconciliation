@@ -18,7 +18,7 @@ const addContact = async (contact: AddContact) => {
     {
       ...contact,
       id: nextId++,
-      createdAt: Date.now(),
+      createdAt: new Date(),
     },
   ];
 };
