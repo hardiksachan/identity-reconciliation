@@ -1,272 +1,96 @@
-# Identity Reconciliation
+## Identity Reconciliation
 
-This repository explores an identity reconciliation problem faced by an e-commerce platform.
+This repository tackles an identity reconciliation problem for an e-commerce platform. Our goal is to identify and link customer purchases even when they use different contact information.
 
-We need to develop a method to identify and track a customer's identity across multiple purchases, even when they use varying contact information.
+We store contact details in a relational database table named `Contact`. A customer can have multiple `Contact` rows linked together, with the oldest being the "primary" and the rest "secondary".
 
-We keep track of the collected contact information in a relational database table named **`Contact`.**
+**Hosted Version:** The web service is available at
 
-```tsx
+```
+https://identity-reconciliation-2z7o.onrender.com/identify
+```
+
+### Setup
+
+1. **Install dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+2. **Database configuration:**
+
+   - Configure your database connection details in `.env` file.
+   - Run migrations using `npm run migrate`.
+
+3. **Start the server:**
+   ```bash
+   npm start
+   ```
+
+### API Endpoint
+
+The web service offers an endpoint `/identify` that accepts POST requests to identify a customer:
+
+```json
 {
-	id                   Int
-  phoneNumber          String?
-  email                String?
-  linkedId             Int? // the ID of another Contact linked to this one
-  linkPrecedence       "secondary"|"primary" // "primary" if it's the first Contact in the link
-  createdAt            DateTime
-  updatedAt            DateTime
-  deletedAt            DateTime?
+  "email": string? (optional),
+  "phoneNumber": number? (optional)
 }
 ```
 
-One customer can have multiple **`Contact`** rows in the database against them. All of the rows are linked together with the oldest one being treated as "primary” and the rest as “secondary” .
+The response is a JSON object with the following structure:
 
-`**Contact`** rows are linked if they have either of **`email`** or **`phone`\*\* as common.
-
-### For example:
-
-If a customer placed an order with
-`email=lorraine@hillvalley.edu` & `phoneNumber=123456`
-and later came back to place another order with
-`email=mcfly@hillvalley.edu` & `phoneNumber=123456` ,
-database will have the following rows:
-
-```jsx
+```json
 {
-	id                   1
-  phoneNumber          "123456"
-  email                "lorraine@hillvalley.edu"
-  linkedId             null
-  linkPrecedence       "primary"
-  createdAt            2023-04-01 00:00:00.374+00
-  updatedAt            2023-04-01 00:00:00.374+00
-  deletedAt            null
-},
-{
-	id                   23
-  phoneNumber          "123456"
-  email                "mcfly@hillvalley.edu"
-  linkedId             1
-  linkPrecedence       "secondary"
-  createdAt            2023-04-20 05:30:00.11+00
-  updatedAt            2023-04-20 05:30:00.11+00
-  deletedAt            null
-}
-```
-
-# Spec
-
-We design a web service with an endpoint **`/identify`** that will receive HTTP POST requests with JSON body of the following format:
-
-```tsx
-{
-	"email"?: string,
-	"phoneNumber"?: number
-}
-```
-
-The web service should return an HTTP 200 response with a JSON payload containing the consolidated contact.
-
-Response Format:
-
-```tsx
-
-	{
-		"contact":{
-			"primaryContatctId": number,
-			"emails": string[], // first element being email of primary contact
-			"phoneNumbers": string[], // first element being phoneNumber of primary contact
-			"secondaryContactIds": number[] // Array of all Contact IDs that are "secondary" to the primary contact
-		}
-	}
-```
-
-### Extending the previous example:
-
-Request:
-
-```jsx
-{
-	"email": "mcfly@hillvalley.edu",
-	"phoneNumber": "123456"
-}
-```
-
-will give the following response
-
-```jsx
-
-	{
-		"contact":{
-			"primaryContatctId": 1,
-			"emails": ["lorraine@hillvalley.edu","mcfly@hillvalley.edu"]
-			"phoneNumbers": ["123456"]
-			"secondaryContactIds": [23]
-		}
-	}
-```
-
-- **In fact, all of the following requests will return the above response** _(use toggle to expand)_
-
-  ```jsx
-  {
-  	"email": null,
-  	"phoneNumber":"123456"
+  "contact": {
+    "primaryContatctId": number,
+    "emails": string[],
+    "phoneNumbers": string[],
+    "secondaryContactIds": number[]
   }
-  ```
-
-  ```jsx
-  {
-  	"email": "lorraine@hillvalley.edu",
-  	"phoneNumber": null
-  }
-  ```
-
-  ```jsx
-  {
-  	"email": "mcfly@hillvalley.edu",
-  	"phoneNumber": null
-  }
-  ```
-
-### But what happens if there are no existing **contacts** against an incoming request?
-
-The service will simply create a new `**Contact**` row with `linkPrecedence=”primary"` treating it as a new customer and return it with an empty array for `secondaryContactIds`
-
-### When is a secondary contact created?
-
-If an incoming request has either of `phoneNumber` or `email` common to an existing contact but contains new information, the service will create a “secondary” **`Contact`** row.
+}
+```
 
 **Example:**
 
-**Existing state of database:**
+Request:
 
-```jsx
+```json
 {
-	id                   1
-  phoneNumber          "123456"
-  email                "lorraine@hillvalley.edu"
-  linkedId             null
-  linkPrecedence       "primary"
-  createdAt            2023-04-01 00:00:00.374+00
-  updatedAt            2023-04-01 00:00:00.374+00
-  deletedAt            null
+  "email": "mcfly@hillvalley.edu",
+  "phoneNumber": "123456"
 }
 ```
 
-**Identify request:**
+Response:
 
-```jsx
+```json
 {
-"email":"mcfly@hillvalley.edu",
-"phoneNumber":"123456"
+  "contact": {
+    "primaryContatctId": 1,
+    "emails": ["lorraine@hillvalley.edu", "mcfly@hillvalley.edu"],
+    "phoneNumbers": ["123456"],
+    "secondaryContactIds": [23]
+  }
 }
 ```
 
-**New state of database:**
+### How it Works
 
-```jsx
-{
-	id                   1
-  phoneNumber          "123456"
-  email                "lorraine@hillvalley.edu"
-  linkedId             null
-  linkPrecedence       "primary"
-  createdAt            2023-04-01 00:00:00.374+00
-  updatedAt            2023-04-01 00:00:00.374+00
-  deletedAt            null
-},
-{
-	id                   23
-  phoneNumber          "123456"
-  email                "mcfly@hillvalley.edu"
-  linkedId             1
-  linkPrecedence       "secondary"
-  createdAt            2023-04-20 05:30:00.11+00
-  updatedAt            2023-04-20 05:30:00.11+00
-  deletedAt            null
-},
-```
+- The service searches for existing contacts matching the provided `email` or `phoneNumber`.
+- If a match is found, it returns the consolidated contact details, including emails, phone numbers, and secondary contact IDs.
+- If no match is found, a new "primary" contact is created.
 
-### Can primary contacts turn into secondary?
+**Secondary Contacts:**
 
-Yes. Let’s take an example
+- A secondary contact is created when new information (different email or phone number) is linked to an existing contact.
 
-**Existing state of database:**
+**Primary Contact Demotion:**
 
-```jsx
-{
-	id                   11
-  phoneNumber          "919191"
-  email                "george@hillvalley.edu"
-  linkedId             null
-  linkPrecedence       "primary"
-  createdAt            2023-04-11 00:00:00.374+00
-  updatedAt            2023-04-11 00:00:00.374+00
-  deletedAt            null
-},
-{
-	id                   27
-  phoneNumber          "717171"
-  email                "biffsucks@hillvalley.edu"
-  linkedId             null
-  linkPrecedence       "primary"
-  createdAt            2023-04-21 05:30:00.11+00
-  updatedAt            2023-04-21 05:30:00.11+00
-  deletedAt            null
-}
-```
+- A primary contact can become secondary if a newer contact with matching details is found.
 
-**Request:**
+**Tech Stack:**
 
-```jsx
-{
-"email":"george@hillvalley.edu",
-"phoneNumber": "717171"
-}
-```
-
-**New state of database:**
-
-```jsx
-{
-	id                   11
-  phoneNumber          "919191"
-  email                "george@hillvalley.edu"
-  linkedId             null
-  linkPrecedence       "primary"
-  createdAt            2023-04-11 00:00:00.374+00
-  updatedAt            2023-04-11 00:00:00.374+00
-  deletedAt            null
-},
-{
-	id                   27
-  phoneNumber          "717171"
-  email                "biffsucks@hillvalley.edu"
-  linkedId             11
-  linkPrecedence       "secondary"
-  createdAt            2023-04-21 05:30:00.11+00
-  updatedAt            2023-04-28 06:40:00.23+00
-  deletedAt            null
-}
-
-```
-
-**Response:**
-
-```jsx
-	**{**
-		"contact":{
-			"primaryContatctId": 11,
-			"emails": ["george@hillvalley.edu","biffsucks@hillvalley.edu"]
-			"phoneNumbers": ["919191","717171"]
-			"secondaryContactIds": [27]
-		}
-	}
-```
-
-## Tech Stack
-
-**Database:** PostgreSQL
-
-**Backend framework:** NodeJs with typescript.
+- Database: PostgreSQL
+- Backend: Node.js with TypeScript
